@@ -1,0 +1,369 @@
+<title>Sams Svensexa Öltavla</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bowlby+One+SC&family=Figtree:wght@400;600;800&family=DM+Mono:wght@500&display=swap">
+<style>
+/* Layout: one column tally board — night stats, drink picker, ranked player rows with tap targets, live feed */
+:root {
+  --bg: #f6efe2;
+  --surface: #fffaf1;
+  --ink: #2a1a0c;
+  --muted: #7a6450;
+  --line: #e4d6bf;
+  --amber: #d98a0b;
+  --amber-ink: #8a5300;
+  --foam: #fffdf7;
+  --groom: #b3261e;
+  --good: #2f7d4f;
+  --font-display: "Bowlby One SC", "Arial Black", Impact, sans-serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-num: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17100a; --surface: #22180f; --ink: #f7ead4; --muted: #b59c80; --line: #3a2a1b;
+    --amber: #f2a51e; --amber-ink: #ffc65a; --foam: #2c2015; --groom: #ff6f61; --good: #6fd39a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17100a; --surface: #22180f; --ink: #f7ead4; --muted: #b59c80; --line: #3a2a1b;
+  --amber: #f2a51e; --amber-ink: #ffc65a; --foam: #2c2015; --groom: #ff6f61; --good: #6fd39a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+}
+.wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+button:disabled { cursor: default; opacity: .45; }
+
+header { display: flex; flex-direction: column; gap: 4px; }
+.eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--amber-ink); }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(34px, 9vw, 54px); line-height: .95; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0; }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); border: 2px solid var(--ink); border-radius: 4px; background: var(--surface); }
+.stat { padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat + .stat { border-left: 1px dashed var(--line); }
+.stat b { font-family: var(--font-num); font-weight: 500; font-size: 26px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat span { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+@media (max-width: 460px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .stat:nth-child(3) { border-left: 0; }
+  .stat:nth-child(n+3) { border-top: 1px dashed var(--line); }
+}
+
+.section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; margin: 0; font-weight: 800; }
+.hint { font-size: 13px; color: var(--muted); }
+
+.types { display: flex; flex-wrap: wrap; gap: 8px; }
+.type {
+  border: 2px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 14px;
+  display: flex; gap: 6px; align-items: baseline; font-weight: 600;
+}
+.type small { color: var(--muted); font-weight: 400; font-size: 12px; }
+.type[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: var(--bg); }
+.type[aria-pressed="true"] small { color: inherit; opacity: .75; }
+
+.add { display: flex; gap: 8px; }
+.add input {
+  flex: 1; min-width: 0; font: inherit; padding: 12px 14px; border: 2px solid var(--line); border-radius: 4px;
+  background: var(--surface); color: var(--ink);
+}
+.btn-ink { background: var(--ink); color: var(--bg); border: 0; border-radius: 4px; padding: 0 18px; font-weight: 800; }
+
+.board { display: flex; flex-direction: column; gap: 10px; }
+.row {
+  display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 12px;
+}
+.row.groom { border: 2px solid var(--groom); }
+.rank { font-family: var(--font-display); font-size: 24px; text-align: center; color: var(--muted); }
+.row:first-child .rank { color: var(--amber-ink); }
+.who { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.name { font-weight: 800; font-size: 18px; overflow-wrap: anywhere; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.tag { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; background: var(--groom); color: var(--bg); padding: 2px 7px; border-radius: 3px; font-weight: 800; }
+.meta { font-family: var(--font-num); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.glasses { display: flex; flex-wrap: wrap; gap: 3px; }
+.glass { width: 12px; height: 16px; border: 2px solid var(--amber-ink); border-top-width: 3px; border-top-color: var(--foam); border-radius: 0 0 3px 3px; background: var(--amber); }
+.glass.half { background: linear-gradient(to top, var(--amber) 50%, transparent 50%); }
+.actions { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.plus {
+  min-width: 84px; min-height: 56px; border: 0; border-radius: 4px; background: var(--amber); color: #2a1a0c;
+  font-family: var(--font-display); font-size: 20px; line-height: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+}
+.plus small { font-family: var(--font-body); font-weight: 800; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.plus:active { transform: translateY(1px); }
+.mini { display: flex; gap: 6px; }
+.mini button { flex: 1; background: transparent; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; padding: 4px 6px; color: var(--muted); }
+.mini button.armed { border-color: var(--groom); color: var(--groom); font-weight: 800; }
+
+.empty { border: 2px dashed var(--line); border-radius: 4px; padding: 20px; text-align: center; color: var(--muted); }
+
+.feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.feed li { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: 14px; }
+.feed time { font-family: var(--font-num); color: var(--muted); font-variant-numeric: tabular-nums; }
+.feed .sg { font-family: var(--font-num); color: var(--muted); }
+
+.banner { border-left: 4px solid var(--amber); background: var(--surface); padding: 10px 12px; font-size: 14px; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 4px; font-weight: 600; font-size: 14px; max-width: calc(100% - 32px); }
+footer { font-size: 12px; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) {
+  .row { transition: transform .2s ease; }
+  .bump { animation: bump .35s ease; }
+  @keyframes bump { 40% { transform: scale(1.03); } }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Svensexa · lördag kväll</div>
+    <h1>Sams Öltavla</h1>
+    <p class="sub">Tryck på knappen varje gång någon öppnar en ny. Tavlan uppdateras live för alla som har sidan öppen.</p>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <section class="stats" aria-label="Kvällen hittills">
+    <div class="stat"><b id="s-beers">0</b><span>Öl totalt</span></div>
+    <div class="stat"><b id="s-sg">0</b><span>Standardglas</span></div>
+    <div class="stat"><b id="s-pace">–</b><span>Glas / timme</span></div>
+    <div class="stat"><b id="s-water">0</b><span>Vatten</span></div>
+  </section>
+
+  <section id="controls">
+    <div class="section-head"><h2>Vad dricks?</h2><span class="hint">Väljs för nästa tryck</span></div>
+    <div class="types" id="types" role="group" aria-label="Dryck"></div>
+  </section>
+
+  <section>
+    <div class="section-head"><h2>Topplistan</h2><span class="hint" id="count-hint"></span></div>
+    <div class="board" id="board">
+      <div class="empty">Laddar tavlan…</div>
+    </div>
+  </section>
+
+  <form class="add" id="add-form" autocomplete="off">
+    <label for="add-name" hidden>Namn</label>
+    <input id="add-name" maxlength="24" placeholder="Lägg till en kompis" required>
+    <button class="btn-ink" type="submit">Lägg till</button>
+  </form>
+
+  <section>
+    <div class="section-head"><h2>Senaste rundorna</h2></div>
+    <ul class="feed" id="feed"></ul>
+  </section>
+
+  <footer>1 standardglas ≈ 12 g alkohol (en 33 cl öl, ett glas vin eller en shot). Ta ett vatten emellanåt.</footer>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const TYPES = [
+  { id: "ol", label: "Öl", sub: "33 cl", sg: 1, beer: 1 },
+  { id: "stor", label: "Stor stark", sub: "50 cl", sg: 1.5, beer: 1 },
+  { id: "shot", label: "Shot", sub: "4 cl", sg: 1, beer: 0 },
+  { id: "vin", label: "Vin", sub: "15 cl", sg: 1, beer: 0 },
+  { id: "drink", label: "Drink", sub: "", sg: 1, beer: 0 },
+  { id: "vatten", label: "Vatten", sub: "", sg: 0, beer: 0 },
+];
+const T = Object.fromEntries(TYPES.map(t => [t.id, t]));
+
+const state = { players: [], drinks: [], type: "ol", canWrite: true, loaded: false, armed: null, bumped: null };
+let db = null;
+const $ = id => document.getElementById(id);
+
+function toast(msg) {
+  const el = $("toast");
+  el.textContent = msg; el.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 2200);
+}
+function fmt(n) { return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(".", ","); }
+function clock(ms) { return new Date(ms).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" }); }
+
+function renderTypes() {
+  const box = $("types");
+  box.replaceChildren(...TYPES.map(t => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "type"; b.id = "type-" + t.id;
+    b.setAttribute("aria-pressed", String(state.type === t.id));
+    b.append(t.label);
+    if (t.sub) { const s = document.createElement("small"); s.textContent = t.sub; b.append(s); }
+    b.onclick = () => { state.type = t.id; renderTypes(); render(); };
+    return b;
+  }));
+}
+
+function tally() {
+  const by = {};
+  for (const p of state.players) by[p.id] = { sg: 0, beer: 0, water: 0, n: 0, last: 0 };
+  for (const d of state.drinks) {
+    const s = by[d.player]; const t = T[d.type];
+    if (!s || !t) continue;
+    s.sg += t.sg; s.beer += t.beer; s.water += d.type === "vatten" ? 1 : 0; s.n += 1; s.last = Math.max(s.last, d.at);
+  }
+  return by;
+}
+
+function render() {
+  if (!state.loaded) return;
+  const by = tally();
+  const valid = state.drinks.filter(d => by[d.player] && T[d.type]);
+  const totSg = valid.reduce((a, d) => a + T[d.type].sg, 0);
+  $("s-beers").textContent = valid.reduce((a, d) => a + T[d.type].beer, 0);
+  $("s-sg").textContent = fmt(totSg);
+  $("s-water").textContent = valid.filter(d => d.type === "vatten").length;
+  const first = valid.length ? Math.min(...valid.map(d => d.at)) : 0;
+  const hours = first ? (Date.now() - first) / 3.6e6 : 0;
+  $("s-pace").textContent = hours > 0.25 && state.players.length ? fmt(Math.round(totSg / hours / state.players.length * 10) / 10) : "–";
+  $("count-hint").textContent = state.players.length ? state.players.length + " i gänget · tempo per person" : "";
+
+  const sorted = [...state.players].sort((a, b) => (by[b.id].sg - by[a.id].sg) || (by[a.id].last - by[b.id].last) || a.name.localeCompare(b.name, "sv"));
+  const board = $("board");
+  if (!sorted.length) {
+    const e = document.createElement("div"); e.className = "empty";
+    e.textContent = state.canWrite ? "Ingen på tavlan än. Lägg till Sam och resten av gänget nedan." : "Ingen på tavlan än.";
+    board.replaceChildren(e);
+  } else {
+    const t = T[state.type];
+    board.replaceChildren(...sorted.map((p, i) => {
+      const s = by[p.id];
+      const row = document.createElement("div");
+      row.className = "row" + (p.groom ? " groom" : "") + (state.bumped === p.id ? " bump" : "");
+      const rank = document.createElement("div"); rank.className = "rank"; rank.textContent = i + 1;
+      const who = document.createElement("div"); who.className = "who";
+      const name = document.createElement("div"); name.className = "name"; name.append(p.name);
+      if (p.groom) { const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = "Brudgummen"; name.append(tag); }
+      const meta = document.createElement("div"); meta.className = "meta";
+      meta.textContent = `${s.beer} öl · ${fmt(s.sg)} glas` + (s.water ? ` · ${s.water} vatten` : "") + (s.last ? ` · senast ${clock(s.last)}` : "");
+      const glasses = document.createElement("div"); glasses.className = "glasses"; glasses.setAttribute("aria-hidden", "true");
+      const whole = Math.floor(s.sg), half = s.sg - whole >= 0.5;
+      for (let k = 0; k < Math.min(whole, 40); k++) { const g = document.createElement("span"); g.className = "glass"; glasses.append(g); }
+      if (half && whole < 40) { const g = document.createElement("span"); g.className = "glass half"; glasses.append(g); }
+      who.append(name, meta);
+      if (s.sg > 0) who.append(glasses);
+
+      const actions = document.createElement("div"); actions.className = "actions";
+      const plus = document.createElement("button");
+      plus.type = "button"; plus.className = "plus"; plus.id = "plus-" + p.id; plus.disabled = !state.canWrite;
+      plus.setAttribute("aria-label", `Lägg till ${t.label} för ${p.name}`);
+      plus.innerHTML = "+1"; const sm = document.createElement("small"); sm.textContent = t.label; plus.append(sm);
+      plus.onclick = () => addDrink(p);
+      const mini = document.createElement("div"); mini.className = "mini";
+      const undo = document.createElement("button"); undo.type = "button"; undo.id = "undo-" + p.id; undo.textContent = "Ångra";
+      undo.disabled = !state.canWrite || !s.n; undo.onclick = () => undoLast(p);
+      const del = document.createElement("button"); del.type = "button"; del.id = "del-" + p.id;
+      const armed = state.armed === p.id;
+      del.textContent = armed ? "Säker?" : "Ta bort"; del.className = armed ? "armed" : ""; del.disabled = !state.canWrite;
+      del.onclick = () => removePlayer(p);
+      mini.append(undo, del);
+      actions.append(plus);
+      if (state.canWrite) actions.append(mini);
+      row.append(rank, who, actions);
+      return row;
+    }));
+  }
+
+  const names = Object.fromEntries(state.players.map(p => [p.id, p.name]));
+  const feed = $("feed");
+  const recent = [...valid].sort((a, b) => b.at - a.at).slice(0, 10);
+  if (!recent.length) {
+    const li = document.createElement("li"); li.style.gridTemplateColumns = "1fr";
+    li.textContent = "Inget registrerat än. Första skålen kommer här.";
+    feed.replaceChildren(li);
+  } else {
+    feed.replaceChildren(...recent.map(d => {
+      const li = document.createElement("li");
+      const tm = document.createElement("time"); tm.textContent = clock(d.at);
+      const what = document.createElement("span"); what.textContent = `${names[d.player]} · ${T[d.type].label}`;
+      const sg = document.createElement("span"); sg.className = "sg"; sg.textContent = T[d.type].sg ? "+" + fmt(T[d.type].sg) : "💧";
+      li.append(tm, what, sg); return li;
+    }));
+  }
+  $("controls").hidden = !state.canWrite;
+  $("add-form").hidden = !state.canWrite;
+}
+
+function writeFailed(e) {
+  if (e && (e.code === "invalid_argument" || e.code === "not_granted")) { setReadOnly(); return; }
+  if (e && e.code === "quota_exceeded") { toast("Tavlan är full. Ta bort gamla spelare för att fortsätta."); return; }
+  toast("Kunde inte spara. Kolla nätet och försök igen.");
+}
+function setReadOnly() {
+  state.canWrite = false;
+  const b = $("banner");
+  b.textContent = "Du tittar i läsläge. Den som delade tavlan registrerar dryckerna, du ser allt live.";
+  b.hidden = false; render();
+}
+
+async function addDrink(p) {
+  if (!db) return;
+  state.bumped = p.id; setTimeout(() => { state.bumped = null; }, 400);
+  try {
+    await db.collection("drinks").add({ player: p.id, type: state.type, at: Date.now() });
+    toast(`${T[state.type].label} till ${p.name}. Skål!`);
+  } catch (e) { writeFailed(e); }
+}
+async function undoLast(p) {
+  if (!db) return;
+  const mine = state.drinks.filter(d => d.player === p.id).sort((a, b) => b.at - a.at)[0];
+  if (!mine) return;
+  try { await db.doc("drinks/" + mine.id).delete(); toast(`Ångrade ${T[mine.type]?.label || "dryck"} för ${p.name}`); }
+  catch (e) { writeFailed(e); }
+}
+async function removePlayer(p) {
+  if (!db) return;
+  if (state.armed !== p.id) {
+    state.armed = p.id; render();
+    clearTimeout(removePlayer.t); removePlayer.t = setTimeout(() => { state.armed = null; render(); }, 3000);
+    return;
+  }
+  state.armed = null;
+  try {
+    for (const d of state.drinks.filter(d => d.player === p.id)) await db.doc("drinks/" + d.id).delete();
+    await db.doc("players/" + p.id).delete();
+    toast(`${p.name} är borttagen`);
+  } catch (e) { writeFailed(e); }
+}
+
+$("add-form").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const input = $("add-name"); const name = input.value.trim().replace(/\s+/g, " ");
+  if (!name || !db) return;
+  if (state.players.some(p => p.name.toLowerCase() === name.toLowerCase())) { toast(`${name} finns redan på tavlan`); return; }
+  try {
+    await db.collection("players").add({ name, groom: /^sam(uel)?\b/i.test(name), createdAt: Date.now() });
+    input.value = ""; toast(`${name} är med!`);
+  } catch (e) { writeFailed(e); }
+});
+
+async function start() {
+  renderTypes();
+  const [dbNs, user] = await Promise.all([window.claude?.use("db") ?? null, window.claude?.use("user") ?? null]);
+  db = dbNs;
+  if (!db) {
+    $("board").replaceChildren(Object.assign(document.createElement("div"), { className: "empty", textContent: "Logga in på claude.ai för att se tavlan live." }));
+    $("controls").hidden = true; $("add-form").hidden = true;
+    return;
+  }
+  if (user && (await user.can("data.write")) === false) setReadOnly();
+  let gotP = false, gotD = false;
+  const ready = () => { if (gotP && gotD) { state.loaded = true; render(); } };
+  db.collection("players").orderBy("createdAt").onSnapshot(snap => {
+    state.players = snap.docs.map(d => ({ id: d.id, ...d.data() })); gotP = true; ready();
+  }, () => toast("Tappade kontakten med tavlan. Ladda om sidan."));
+  db.collection("drinks").orderBy("at", "desc").limit(1000).onSnapshot(snap => {
+    state.drinks = snap.docs.map(d => ({ id: d.id, ...d.data() })); gotD = true; ready();
+  }, () => toast("Tappade kontakten med tavlan. Ladda om sidan."));
+  setInterval(render, 60000);
+}
+start();
+</script>
